@@ -1,0 +1,3 @@
+venv/
+# Ignore database files
+db.sqlite3
