@@ -43,13 +43,12 @@ const AppointmentForm = ({ cartList }) => {
     formData.append('collection_address', collectionAddress);
     formData.append('date', date.toISOString().slice(0, 10));
     formData.append('time', time);
-    formData.append('services', JSON.stringify(services)); // Convert services to a JSON string and append to formData
+    formData.append('services', `[${cartList}]`); // Convert services to a JSON string and append to formData
     formData.append('status', 'Scheduled');
 
-    fetch('http://192.168.0.106:8000/api/main/appointments/', {
+    fetch('http://192.168.0.106:8000/api/main/new-appointment/', {
       method: 'POST',
       headers: {
-        Accept: 'application/json',
         Authorization: `Bearer ${token.access_token}`,
       },
       body: formData,

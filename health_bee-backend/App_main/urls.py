@@ -21,4 +21,5 @@ urlpatterns = [
     path('service-models/<int:pk>/', ServiceModelRetrieveUpdateDestroyView.as_view(),
          name='service-model-retrieve-update-destroy'),
      path('user-home-data/', UserHomeData.as_view(), name='user-home-data'),
+     path('new-appointment/', appointmentCreateAPIView, name='new-appointment'),
 ]

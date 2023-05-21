@@ -1,6 +1,6 @@
 from rest_framework import viewsets, permissions, generics
 from rest_framework.response import Response
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.views import APIView
 
 from App_main.models import *
@@ -70,6 +70,35 @@ class ServiceModelListCreateView(generics.ListCreateAPIView):
 class ServiceModelRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = ServiceModel.objects.all()
     serializer_class = ServiceModelSerializer
+    
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def appointmentCreateAPIView(request):
+    collection_address = request.data['collection_address']
+    services = request.data['services']
+    date = request.data['date']
+    time = request.data['time']
+    status = request.data['status']
+    print(collection_address, status, date, time, services)
+    my_list = eval(services)
+    cart = ServiceCartModel.objects.get_or_create(user=request.user, bought_status=False)
+    for i in my_list:
+        # item = ServiceModel.objects.get(id=i)
+        cart[0].services.add(i)
+
+    cart[0].save()
+    query = Appointment(
+        user = request.user,
+        collection_address = collection_address,
+        service = cart[0],
+        date = date,
+        time = time,
+        status = status,
+    )
+
+    query.save()
+
+    return Response({"status": "Successfully Created"}, status=201)
 
 
 class AppointmentViewSet(viewsets.ModelViewSet):

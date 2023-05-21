@@ -36,7 +36,7 @@ class ServiceCartModel(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_query_name="service_cart_user")
     services = models.ManyToManyField(ServiceModel, related_name="added_services")
     created_at = models.DateTimeField(auto_now_add=True)
-
+    bought_status = models.BooleanField(default=False)
 
 class Appointment(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
