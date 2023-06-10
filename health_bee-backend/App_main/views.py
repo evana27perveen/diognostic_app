@@ -15,14 +15,22 @@ class UserHomeData(APIView):
     def get(self, request, format=None):
         user = request.user
         profile_exists_or_not = PatientProfile.objects.filter(user=user).exists()
-
-        appointments_running = Appointment.objects.filter(user=user, status="Scheduled").count()
+        appointments_requests = Appointment.objects.filter(user=user, status="Requested").count()
+        appointments_running = Appointment.objects.filter(user=user, status="Confirmed").count()
         appointments_completed = Appointment.objects.filter(user=user, status="Completed").count()
+        appointments_missed = Appointment.objects.filter(user=user, status="Missed").count()
+        passed_appointments = appointments_completed + appointments_missed
+        results = TestResult.objects.filter(medical_sample__appointment__user=user).count()
 
-        total_tests = Appointment.objects.filter(user=user, status='Completed').aggregate(Sum('service__services'))
-        total_tests_count = total_tests['service__services__sum'] or 0
+        
 
-        return Response({"profile": f"{profile_exists_or_not}", "appointment_running": appointments_running, 'appointment_completed': appointments_completed, 'total_complted': appointments_completed, 'total_tests': f"{total_tests_count}"})
+        return Response({"profile": f"{profile_exists_or_not}", 
+                         "appointment_running": appointments_running, 
+                         'appointment_completed': passed_appointments, 
+                         "appointments_requests": appointments_requests,
+                         'results': results})
+        
+
 
 
 class PatientProfileViewSet(viewsets.ModelViewSet):
@@ -71,6 +79,19 @@ class ServiceModelRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIVie
     queryset = ServiceModel.objects.all()
     serializer_class = ServiceModelSerializer
     
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def services(request, pk):
+    try:
+        service_cart = ServiceCartModel.objects.get(pk=pk)
+        services = service_cart.services.all()
+        service_data = [{"test_name": service.test_name, "price": service.price} for service in services]
+        return Response({"services": service_data})
+    except ServiceCartModel.DoesNotExist:
+        return Response({"error": "Service cart not found."}, status=404)
+
+    
 @api_view(['POST'])
 @permission_classes([permissions.IsAuthenticated])
 def appointmentCreateAPIView(request):
@@ -83,8 +104,9 @@ def appointmentCreateAPIView(request):
     my_list = eval(services)
     cart = ServiceCartModel.objects.get_or_create(user=request.user, bought_status=False)
     for i in my_list:
-        # item = ServiceModel.objects.get(id=i)
         cart[0].services.add(i)
+        
+    cart[0].bought_status = True
 
     cart[0].save()
     query = Appointment(
@@ -101,7 +123,17 @@ def appointmentCreateAPIView(request):
     return Response({"status": "Successfully Created"}, status=201)
 
 
-class AppointmentViewSet(viewsets.ModelViewSet):
+class ServiceCartModelDetailView(generics.RetrieveAPIView):
+    queryset = ServiceCartModel.objects.all()
+    serializer_class = ServiceCartModelSerializer
+    lookup_field = 'pk'
+    
+    
+
+
+
+
+class AppointmentViewSet(viewsets.ModelViewSet): # This class is not being used for appointment creation
     queryset = Appointment.objects.all()
     serializer_class = AppointmentSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -110,16 +142,21 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         serializer = self.serializer_class(data=request.data, context={"request": request})
         serializer.is_valid(raise_exception=True)
 
-        service_ids = request.data.get('services', [])  # Extract service IDs from request data
+        service_ids = request.data.get('services', [])
         collection_address = request.data.get('collection_address')
         date = request.data.get('date')
         time = request.data.get('time')
 
-        service_cart_data = {"services": service_ids, "user": request.user.id}  # ServiceCartModel data
-        service_cart_serializer = ServiceCartModelSerializer(data=service_cart_data)
-        service_cart_serializer.is_valid(raise_exception=True)
-        service_cart = service_cart_serializer.save()
+        service_cart = ServiceCartModel.objects.create(user=request.user)
 
+        for service_id in service_ids:
+            service = ServiceModel.objects.get(pk=service_id)
+            service_cart.services.add(service)
+
+        service_cart.bought_status = True
+        service_cart.save()
+        print(service_cart, "eva")
+        
         serializer.validated_data['service'] = service_cart
         serializer.validated_data['collection_address'] = collection_address
         serializer.validated_data['date'] = date
@@ -146,6 +183,12 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         appointment = Appointment.objects.get(pk=pk)
         appointment.delete()
         return Response(status=204)
+    
+    def get(self, request, format=None):
+        user = request.user
+        appointments = Appointment.objects.filter(user=user).order_by('date').order_by('time')
+
+        return Response({"appointments": appointments, })
 
 
 class MedicalSampleViewSet(viewsets.ModelViewSet):
@@ -190,5 +233,7 @@ class TestResultViewSet(viewsets.ModelViewSet):
 
     def retrieve(self, request, pk, **kwargs):
         test_result = TestResult.objects.get(pk=pk)
+        test_result.seen = True
+        test_result.save()
         serializer = self.serializer_class(test_result)
         return Response(serializer.data)

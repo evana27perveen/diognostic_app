@@ -3,6 +3,8 @@ import { View, Text, TextInput, Button, StyleSheet, TouchableOpacity } from 'rea
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import Fontisto from 'react-native-vector-icons/Fontisto';
 import { useCookies } from 'react-cookie';
+import { useNavigation, useRoute } from '@react-navigation/native';
+
 
 const AppointmentForm = ({ cartList }) => {
   const [token] = useCookies(['myToken']);
@@ -11,8 +13,8 @@ const AppointmentForm = ({ cartList }) => {
   const [time, setTime] = useState('');
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
-  const service = cartList;
-  console.log(service);
+  const navigation = useNavigation();
+  
 
   const handleDateChange = (selectedDate) => {
     setShowDatePicker(false);
@@ -30,21 +32,19 @@ const AppointmentForm = ({ cartList }) => {
   };
 
   const handleCreateAppointment = () => {
-    console.log(date.toISOString().slice(0, 10));
-    console.log(time);
     if (!cartList || !time) {
       console.log('Service and Time are required');
       return;
     }
 
-    const services = cartList.map(item => item.id); // Extract service IDs from the cartList
+    console.log(cartList);
 
     const formData = new FormData();
     formData.append('collection_address', collectionAddress);
     formData.append('date', date.toISOString().slice(0, 10));
     formData.append('time', time);
-    formData.append('services', `[${cartList}]`); // Convert services to a JSON string and append to formData
-    formData.append('status', 'Scheduled');
+    formData.append('services', `[${cartList}]`); 
+    formData.append('status', 'Requested');
 
     fetch('http://192.168.0.106:8000/api/main/new-appointment/', {
       method: 'POST',
@@ -56,6 +56,7 @@ const AppointmentForm = ({ cartList }) => {
       .then(response => response.json())
       .then(data => {
         console.log('Server response:', data);
+        navigation.navigate('Home');
       })
       .catch(error => {
         console.log('Error:', error);

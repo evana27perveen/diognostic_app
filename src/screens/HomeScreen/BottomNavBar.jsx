@@ -5,6 +5,7 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Entypo from 'react-native-vector-icons/Entypo';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useCookies } from 'react-cookie';
+import FontAwesome5 from 'react-native-vector-icons/FontAwesome5'
 
 const styles = StyleSheet.create({
   container: {
@@ -20,12 +21,13 @@ const styles = StyleSheet.create({
   },
   icon: {
     marginBottom: 4,
+    fontSize: 27,
   },
   activeIcon: {
-    height: 65,
-    width: 65,
+    height: 75,
+    width: 75,
     marginBottom: 55,
-    fontSize: 40,
+    fontSize: 55,
     borderWidth: 3,
     borderColor: '#3180e7',
     borderRadius: 100,
@@ -70,6 +72,7 @@ const styles = StyleSheet.create({
 const BottomNavBar = ({ cartList, cartItems }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isNewMessageIconBigger, setIsNewMessageIconBigger] = useState(false);
+  const [isServicePage, setIsServicePage] = useState(false);
   const [animation] = useState(new Animated.Value(0));
 
   const [token, setToken, removeToken] = useCookies(['myToken']);
@@ -80,13 +83,13 @@ const BottomNavBar = ({ cartList, cartItems }) => {
 
   useEffect(() => {
     if (route.name === 'Services') {
+      setIsServicePage(true);
       setIsNewMessageIconBigger(true);
-      
     } else {
+      setIsServicePage(false);
       setIsNewMessageIconBigger(false);
-      
     }
-  }, [route.name, animation]);
+  }, [route.name]);
 
   const toggleDropdown = () => {
     setIsDropdownOpen((prevState) => !prevState);
@@ -101,7 +104,13 @@ const BottomNavBar = ({ cartList, cartItems }) => {
     navigation.navigate('Login');
   };
 
-  
+  const handleNewMessagePress = () => {
+    if (isServicePage) {
+      navigation.navigate('Appointment', { cartList, cartItems });
+    } else {
+      navigation.navigate('Results');
+    }
+  };
 
   return (
     <View>
@@ -109,16 +118,20 @@ const BottomNavBar = ({ cartList, cartItems }) => {
         <TouchableOpacity onPress={() => navigation.navigate('Home')}>
           <Ionicons name="home" size={25} color="white" style={styles.icon} />
         </TouchableOpacity>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate('MyAppointments')}>
           <MaterialIcons name="history-edu" size={25} color="white" style={styles.icon} />
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => navigation.navigate('Appointment', { cartList, cartItems })}>
-          <Entypo
-            name="new-message"
-            size={isNewMessageIconBigger ? 30 : 25}
-            color="white"
-            style={[styles.icon, isNewMessageIconBigger && styles.activeIcon]}
-          />
+        <TouchableOpacity onPress={handleNewMessagePress}>
+          {isServicePage ? (
+            <MaterialIcons name="wifi-protected-setup" size={25} color="white" style={[styles.icon, isNewMessageIconBigger && styles.activeIcon]} />
+          ) : (
+            <FontAwesome5
+              name="envelope-open-text"
+              size={isNewMessageIconBigger ? 30 : 25}
+              color="white"
+              style={styles.icon}
+            />
+          )}
         </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate('Services')}>
           <MaterialIcons name="medical-services" size={25} color="white" style={styles.icon} />

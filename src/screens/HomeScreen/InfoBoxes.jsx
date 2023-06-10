@@ -1,12 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useCookies } from 'react-cookie';
+import { useFocusEffect } from '@react-navigation/native';
 
 const InfoBoxes = () => {
   const [token] = useCookies(['myToken']);
   const [group] = useCookies(['myGroup']);
   const [appointmentsRunning, setAppointmentsRunning] = useState(0);
+  const [appointmentsRequested, setAppointmentsRequested] = useState(0);
   const [appointmentsCompleted, setAppointmentsCompleted] = useState(0);
+  const [appointmentsResults, setAppointmentsResults] = useState(0);
   const [totalTests, setTotalTests] = useState(0);
   const [profileStatus, setProfileStatus] = useCookies(['profileStatus']);
 
@@ -15,8 +18,18 @@ const InfoBoxes = () => {
     fetchData();
   }, []);
 
+
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchData();
+      return () => {
+      };
+    }, [])
+  );
+
+  
+
   const fetchData = async () => {
-    console.log(token);
     try {
       const response = await fetch('http://192.168.0.106:8000/api/main/user-home-data/', {
         method: 'GET',
@@ -27,13 +40,13 @@ const InfoBoxes = () => {
         },
       });
       const data = await response.json();
-      console.log(data);
   
       if (data !== null) {
         setAppointmentsRunning(data.appointment_running);
+        setAppointmentsRequested(data.appointments_requests);
         setAppointmentsCompleted(data.appointment_completed);
-        setTotalTests(data.total_tests);
         setProfileStatus("profile", data.profile);
+        setAppointmentsResults(data.results);
       }
     } catch (error) {
       console.log('Error fetching data:', error);
@@ -55,12 +68,12 @@ const InfoBoxes = () => {
       </View>
       <View style={styles.row}>
         <View style={[styles.card, styles.bottomLeftCard]}>
-          <Text style={styles.title}>Total Tests</Text>
-          <Text style={styles.value}>{totalTests}</Text>
+          <Text style={styles.title}>Appointment Requests</Text>
+          <Text style={styles.value}>{appointmentsRequested}</Text>
         </View>
         <View style={[styles.card, styles.bottomRightCard]}>
-          <Text style={styles.title}>Total Feedbacks</Text>
-          <Text style={styles.value}>187</Text>
+          <Text style={styles.title}>Test Results</Text>
+          <Text style={styles.value}>{appointmentsResults}</Text>
         </View>
       </View>
     </View>

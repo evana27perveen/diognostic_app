@@ -45,10 +45,10 @@ class Appointment(models.Model):
     date = models.DateField()
     time = models.TimeField()
     status = models.CharField(max_length=20, choices=(
-        ('Scheduled', 'Scheduled'), ('Completed', 'Completed'), ('Cancelled', 'Cancelled')))
+        ('Requested', 'Requested'), ('Confirmed', 'Confirmed'), ('Completed', 'Completed'), ('Cancelled', 'Cancelled'), ('Missed', 'Missed')))
 
     def __str__(self):
-        return f"{self.user.patientprofile} - {self.date} {self.time}"
+        return f"{self.user.patientprofile} - {self.status} - {self.date} {self.time}"
 
 
 class MedicalSample(models.Model):
@@ -78,6 +78,7 @@ class TestResult(models.Model):
     resultDocument = models.FileField(upload_to="test_result_documents/")
     result = models.TextField()
     date_processed = models.DateField(auto_now_add=True)
+    seen = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.medical_sample.patient.full_name} - {self.medical_sample.sample_type}"

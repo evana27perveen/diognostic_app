@@ -4,18 +4,16 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, Permis
 from django.db import models
 
 
-# Create your models here.
 class UserManager(BaseUserManager):
     def _create_user(self, username, password, **extra_fields):
         if not username:
             raise ValueError("The username field must be set!")
 
-        # Validate if the username is a valid email or phone number
         if re.match(r'^[a-zA-Z0-9.!#$%&\'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$',
                     username):  # Email validation
             username = self.normalize_email(username)
-        else:  # Phone number validation
-            phone_regex = r'^\+?880\d{10}$'  # Bangladeshi phone number regex
+        else:  
+            phone_regex = r'^\+?880\d{10}$'  
             phone_validator = RegexValidator(
                 regex=phone_regex,
                 message="Enter a valid Bangladeshi phone number."

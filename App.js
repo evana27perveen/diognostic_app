@@ -10,6 +10,8 @@ import ProfileUpdate from './src/screens/AuthScreen/ProfileUpdate';
 import Home from './src/screens/HomeScreen/Home';
 import Services from './src/screens/ServiceScreen/Services';
 import Appointment from './src/screens/AppointmentScreen/Appointment';
+import Results from './src/screens/ResultScreen/Results';
+import MyAppointments from './src/screens/AppointmentScreen/MyAppointments';
 
 const Stack = createStackNavigator();
 
@@ -29,6 +31,8 @@ export default function App() {
           <Stack.Screen name="Services" component={Services} options={{ headerShown: false }} />
           <Stack.Screen name="Profile" component={Profile} options={{ headerShown: false }} />
           <Stack.Screen name="ProfileUpdate" component={ProfileUpdate} options={{ headerShown: false }} />
+          <Stack.Screen name="MyAppointments" component={MyAppointments} options={{ headerShown: false }} />
+          <Stack.Screen name="Results" component={Results} options={{ headerShown: false }} />
         </Stack.Navigator>
       </NavigationContainer>
     </>
